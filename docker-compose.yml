@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:latest
+    container_name: open-webui
+    restart: unless-stopped
+    ports:
+      - "3000:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - WEBUI_AUTH=true
+      - ENABLE_LOCAL_STORAGE=false
+      - DATABASE_URL=sqlite:////app/backend/data/webui.db
+      - ENABLE_OPENAI_API_KEYS=true
+    depends_on:
+      - ollama
+    volumes:
+      - openwebui:/app/backend/data
+
+volumes:
+  ollama:
+  openwebui:
